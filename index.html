@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captcha Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #image-container {
+            margin: 20px 0;
+        }
+        #progress {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        #result {
+            font-size: 24px;
+            color: green;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://unpkg.com/tesseract.js@v4.1.1/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <h1>Captcha Solver</h1>
+    <div id="image-container">
+        <img id="captcha-image" src="" alt="Captcha Image" />
+    </div>
+    <div id="image-source"></div>
+    <div id="progress"></div>
+    <div id="result"></div>
+
+    <script>
+        const defaultImageUrl = 'sample.png';
+        const urlParams = new URLSearchParams(window.location.search);
+        const captchaUrl = urlParams.get('url') || defaultImageUrl;
+
+        document.getElementById('captcha-image').src = captchaUrl;
+        document.getElementById('image-source').innerText = `Using image from: ${captchaUrl}`;
+
+        function solveCaptcha() {
+            document.getElementById('progress').innerText = 'Solving captcha...';
+            Tesseract.recognize(
+                captchaUrl,
+                'eng',
+                {
+                    logger: info => {
+                        if (info.status === 'recognizing text') {
+                            document.getElementById('progress').innerText = `Progress: ${Math.round(info.progress * 100)}%`;
+                        }
+                    }
+                }
+            ).then(({ data: { text } }) => {
+                document.getElementById('result').innerText = `Solved Captcha: ${text}`;
+            }).catch(err => {
+                document.getElementById('result').innerText = 'Error solving captcha.';
+            });
+        }
+
+        window.onload = () => {
+            setTimeout(() => {
+                if (!document.getElementById('result').innerText) {
+                    document.getElementById('result').innerText = 'Timeout: Could not solve captcha in time.';
+                }
+            }, 15000);
+            solveCaptcha();
+        };
+    </script>
+</body>
+</html>
